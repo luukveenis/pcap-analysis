@@ -13,6 +13,8 @@
 /* ---------------- Function Definitions ----------------*/
 int process_file(pcap_t*, struct result*);
 struct packet* process_packet(const u_char*, struct timeval, unsigned int);
+int check_connection(struct packet, struct result);
+struct connection* new_connection(struct packet, struct result*);
 
 
 /* ---------------- Main ----------------*/
@@ -35,7 +37,11 @@ int main(int argc, char **argv) {
   }
 
   /* Parse the contents of the file */
+  res.cons_len = 0;
+  res.packets = 0;
   process_file(handle, &res);
+  printf("Packets: %d\n", res.packets);
+  printf("Connections: %d\n", res.cons_len);
 
   return 0;
 }
@@ -47,18 +53,19 @@ int main(int argc, char **argv) {
  *  - -1 for failure
  */
 int process_file(pcap_t *handle, struct result *res){
+  int con;
+  struct connection *connection;
   struct pcap_pkthdr header;
   struct packet *pkt;
   const u_char *packet;
 
   while (packet = pcap_next(handle, &header)){
+    res->packets++;
     pkt = process_packet(packet, header.ts, header.caplen);
-    printf("---------- PACKET ----------\n");
-    printf("IP src: %s\n", pkt->ip_src);
-    printf("IP dst: %s\n", pkt->ip_dst);
-    printf("src port: %d\n", pkt->port_src);
-    printf("dst port: %d\n", pkt->port_dst);
-    printf("----------------------------\n\n");
+    con = check_connection(*pkt, *res);
+    if (con == -1) {
+      connection = new_connection(*pkt, res);
+    }
     free(pkt);
   }
 
@@ -122,4 +129,42 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   pkt->port_dst = ntohs(tcp->th_dport);
 
   return pkt;
+}
+
+/* Returns the ID of the connection this packet belongs to; if this is a new
+ * connection being discovered, we return -1.
+ * We have to account for the fact that the source/destination might be swapped
+ * since the packet can be going client->server OR server->client.
+ */
+int check_connection(struct packet pkt, struct result res) {
+  int i;
+  for (i = 0; i < res.cons_len; i++) {
+    struct connection *con = res.cons[i];
+    /* The source IPs match */
+    if (!strcmp(pkt.ip_src, con->ip_src) && !strcmp(pkt.ip_dst, con->ip_dst) &&
+        pkt.port_src == con->port_src && pkt.port_dst == con->port_dst) {
+      return con->id;
+    /* The packet source IP matches the connection destination IP */
+    }
+    if (!strcmp(pkt.ip_src, con->ip_dst) && !strcmp(pkt.ip_dst, con->ip_src) &&
+        pkt.port_src == con->port_dst && pkt.port_dst == con->port_src) {
+      return con->id;
+    }
+  }
+  return -1;
+}
+
+/* Creates a new connection struct using the fields from the packet struct
+ * provided and adds this connection to the result array. */
+struct connection* new_connection(struct packet pkt, struct result *res) {
+  struct connection *con = malloc(sizeof(struct connection));
+  strcpy(con->ip_src, pkt.ip_src);
+  strcpy(con->ip_dst, pkt.ip_dst);
+  con->port_src = pkt.port_src;
+  con->port_dst = pkt.port_dst;
+  con->id = res->cons_len + 1;
+  res->cons[res->cons_len] = con;
+  res->cons_len++;
+
+  return con;
 }

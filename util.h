@@ -5,6 +5,7 @@
 #define MAX_NUM_CONNECTION 1000
 
 struct packet {
+  int con_id;
   char ip_src[MAX_STR_LEN];
   char ip_dst[MAX_STR_LEN]; /* destination ip */
   uint16_t port_src;        /* source port number */
@@ -20,8 +21,9 @@ struct connection {
 };
 
 struct result {
-  int cons_len;
-  struct connection cons[MAX_NUM_CONNECTION];
+  int packets;    /* Total number of packets sent */
+  int cons_len;   /* Total number of connections */
+  struct connection* cons[MAX_NUM_CONNECTION];
 };
 
 
