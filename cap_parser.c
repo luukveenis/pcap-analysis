@@ -62,11 +62,15 @@ int process_file(pcap_t *handle, struct result *res){
   while (packet = pcap_next(handle, &header)){
     res->packets++;
     pkt = process_packet(packet, header.ts, header.caplen);
-    con = check_connection(*pkt, *res);
-    if (con == -1) {
-      connection = new_connection(*pkt, res);
+    if (pkt != NULL) {
+      con = check_connection(*pkt, *res);
+      if (con == -1) {
+        connection = new_connection(*pkt, res);
+      }
+      if (pkt->syn == 1) connection->synstate++;
+      if (pkt->fin == 1) connection->finstate++;
+      free(pkt);
     }
-    free(pkt);
   }
 
   return 0;
@@ -127,6 +131,12 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   tcp = (struct tcphdr*) packet;
   pkt->port_src = ntohs(tcp->th_sport);
   pkt->port_dst = ntohs(tcp->th_dport);
+  pkt->seq = ntohl(tcp->th_seq);
+  pkt->ackn = ntohl(tcp->th_ack);
+  pkt->syn = tcp->syn;
+  pkt->ack = tcp->ack;
+  pkt->fin = tcp->fin;
+  pkt->rst = tcp->rst;
 
   return pkt;
 }
@@ -163,6 +173,8 @@ struct connection* new_connection(struct packet pkt, struct result *res) {
   con->port_src = pkt.port_src;
   con->port_dst = pkt.port_dst;
   con->id = res->cons_len + 1;
+  con->synstate = 0;
+  con->finstate = 0;
   res->cons[res->cons_len] = con;
   res->cons_len++;
 

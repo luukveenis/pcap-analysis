@@ -4,12 +4,21 @@
 #define MAX_STR_LEN 120
 #define MAX_NUM_CONNECTION 1000
 
+#include <stdint.h>
+#include <netinet/tcp.h>
+
 struct packet {
   int con_id;
   char ip_src[MAX_STR_LEN];
   char ip_dst[MAX_STR_LEN]; /* destination ip */
   uint16_t port_src;        /* source port number */
   uint16_t port_dst;        /* destination port number */
+  tcp_seq seq;
+  tcp_seq ackn;
+  u_int16_t syn:1;
+  u_int16_t ack:1;
+  u_int16_t fin:1;
+  u_int16_t rst:1;
 };
 
 struct connection {
@@ -18,6 +27,8 @@ struct connection {
   char ip_dst[MAX_STR_LEN]; /* destination ip */
   uint16_t port_src;        /* source port number */
   uint16_t port_dst;        /* destination port number */
+  uint16_t synstate;
+  uint16_t finstate;
 };
 
 struct result {
