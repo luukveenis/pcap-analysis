@@ -41,5 +41,6 @@ struct result {
 const char* timestamp_str(struct timeval);
 void problem_pkt(struct timeval, const char*);
 void pkt_too_short(struct timeval, const char*);
+void print_results(struct result);
 
 #endif

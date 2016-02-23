@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <pcap.h>
 
+#include "util.h"
+
 /* Note, this routine returns a pointer into a static buffer, and
  * so each call overwrites the value returned by the previous call.
  */
@@ -18,4 +20,23 @@ void problem_pkt(struct timeval ts, const char *reason) {
 void pkt_too_short(struct timeval ts, const char *truncated_hdr) {
   fprintf(stderr, "packet with timestamp %s is truncated and lacks a full %s\n",
     timestamp_str(ts), truncated_hdr);
+}
+
+void print_results(struct result res) {
+  int i;
+  printf("A) Total number of connections: %d\n", res.cons_len);
+  printf("--------------------------------------------------------\n");
+  printf("B) Connections' details:\n");
+  for (i = 0; i < res.cons_len; i++) {
+    struct connection *con = res.cons[i];
+    printf("Connection %d\n", con->id);
+    printf("Source address: %s\n", con->ip_src);
+    printf("Destination address: %s\n", con->ip_src);
+    printf("Source port: %d\n", con->port_src);
+    printf("Destination port: %d\n", con->port_dst);
+    printf("Status: S%dF%d\n", con->synstate, con->finstate);
+    printf("END\n");
+    if (i != res.cons_len - 1) printf("+++++++++++++++++++++++++++++\n");
+  }
+  printf("--------------------------------------------------------\n");
 }

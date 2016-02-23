@@ -40,8 +40,7 @@ int main(int argc, char **argv) {
   res.cons_len = 0;
   res.packets = 0;
   process_file(handle, &res);
-  printf("Packets: %d\n", res.packets);
-  printf("Connections: %d\n", res.cons_len);
+  print_results(res);
 
   return 0;
 }
