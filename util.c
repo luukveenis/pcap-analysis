@@ -26,12 +26,12 @@ void print_results(struct result res) {
   int i;
   printf("A) Total number of connections: %d\n", res.cons_len);
   printf("--------------------------------------------------------\n");
-  printf("B) Connections' details:\n");
+  printf("B) Connections' details:\n\n");
   for (i = 0; i < res.cons_len; i++) {
     struct connection *con = res.cons[i];
     printf("Connection %d\n", con->id);
     printf("Source address: %s\n", con->ip_src);
-    printf("Destination address: %s\n", con->ip_src);
+    printf("Destination address: %s\n", con->ip_dst);
     printf("Source port: %d\n", con->port_src);
     printf("Destination port: %d\n", con->port_dst);
     printf("Status: S%dF%d\n", con->synstate, con->finstate);
