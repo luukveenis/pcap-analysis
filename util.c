@@ -22,6 +22,15 @@ void pkt_too_short(struct timeval ts, const char *truncated_hdr) {
     timestamp_str(ts), truncated_hdr);
 }
 
+int is_complete(struct connection *con){
+  if ((con->synstate == 1 || con->synstate == 2) &&
+      (con->finstate == 1 || con->finstate == 2)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 void print_results(struct result res) {
   int i;
   printf("A) Total number of connections: %d\n", res.cons_len);
@@ -35,6 +44,11 @@ void print_results(struct result res) {
     printf("Source port: %d\n", con->port_src);
     printf("Destination port: %d\n", con->port_dst);
     printf("Status: S%dF%d\n", con->synstate, con->finstate);
+    if (is_complete(con)) {
+      printf("Number of packets sent from source to destination: %d\n", con->psent);
+      printf("Number of packets sent from destination to client: %d\n", con->precvd);
+      printf("Total number of packets: %d\n", con->plen);
+    }
     printf("END\n");
     if (i != res.cons_len - 1) printf("+++++++++++++++++++++++++++++\n");
   }
