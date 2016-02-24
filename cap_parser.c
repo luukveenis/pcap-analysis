@@ -13,8 +13,9 @@
 /* ---------------- Function Definitions ----------------*/
 int process_file(pcap_t*, struct result*);
 struct packet* process_packet(const u_char*, struct timeval, unsigned int);
-int check_connection(struct packet, struct result);
+struct connection* check_connection(struct packet, struct result);
 struct connection* new_connection(struct packet, struct result*);
+void add_packet(struct connection*, struct packet*);
 
 
 /* ---------------- Main ----------------*/
@@ -52,27 +53,43 @@ int main(int argc, char **argv) {
  *  - -1 for failure
  */
 int process_file(pcap_t *handle, struct result *res){
-  int con;
   struct connection *connection;
   struct pcap_pkthdr header;
   struct packet *pkt;
   const u_char *packet;
 
-  while (packet = pcap_next(handle, &header)){
+  while ((packet = pcap_next(handle, &header))){
     res->packets++;
     pkt = process_packet(packet, header.ts, header.caplen);
     if (pkt != NULL) {
-      con = check_connection(*pkt, *res);
-      if (con == -1) {
+      connection = check_connection(*pkt, *res);
+      if (connection == NULL) {
         connection = new_connection(*pkt, res);
       }
-      if (pkt->syn == 1) connection->synstate++;
-      if (pkt->fin == 1) connection->finstate++;
+      add_packet(connection, pkt);
+      if (pkt->syn) connection->synstate++;
+      if (pkt->fin) connection->finstate++;
       free(pkt);
     }
   }
 
   return 0;
+}
+
+/* Associates a packet with a connection */
+void add_packet(struct connection *con, struct packet *pkt) {
+  if (con->plen >= MAX_PACKETS) {
+    printf("Max packets per connection exceeded\n");
+    printf("Please increase MAX_PACKETS in util.h to avoid this error\n");
+    printf("Exiting...\n");
+    exit(EXIT_FAILURE);
+  }
+  con->packets[con->plen++] = pkt;
+  if (!strcmp(pkt->ip_src, con->ip_src)) {
+    con->psent++;
+  } else {
+    con->precvd++;
+  }
 }
 
 /* Parser a packet containing ethernet, IP, and TCP headers and returns a
@@ -145,22 +162,22 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
  * We have to account for the fact that the source/destination might be swapped
  * since the packet can be going client->server OR server->client.
  */
-int check_connection(struct packet pkt, struct result res) {
+struct connection* check_connection(struct packet pkt, struct result res) {
   int i;
   for (i = 0; i < res.cons_len; i++) {
     struct connection *con = res.cons[i];
     /* The source IPs match */
     if (!strcmp(pkt.ip_src, con->ip_src) && !strcmp(pkt.ip_dst, con->ip_dst) &&
         pkt.port_src == con->port_src && pkt.port_dst == con->port_dst) {
-      return con->id;
+      return con;
     /* The packet source IP matches the connection destination IP */
     }
     if (!strcmp(pkt.ip_src, con->ip_dst) && !strcmp(pkt.ip_dst, con->ip_src) &&
         pkt.port_src == con->port_dst && pkt.port_dst == con->port_src) {
-      return con->id;
+      return con;
     }
   }
-  return -1;
+  return NULL;
 }
 
 /* Creates a new connection struct using the fields from the packet struct
@@ -172,6 +189,7 @@ struct connection* new_connection(struct packet pkt, struct result *res) {
   con->port_src = pkt.port_src;
   con->port_dst = pkt.port_dst;
   con->id = res->cons_len + 1;
+  con->plen = 0;
   con->synstate = 0;
   con->finstate = 0;
   res->cons[res->cons_len] = con;
