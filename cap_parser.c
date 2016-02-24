@@ -132,10 +132,10 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   pkt->port_dst = ntohs(tcp->th_dport);
   pkt->seq = ntohl(tcp->th_seq);
   pkt->ackn = ntohl(tcp->th_ack);
-  pkt->syn = tcp->syn;
-  pkt->ack = tcp->ack;
-  pkt->fin = tcp->fin;
-  pkt->rst = tcp->rst;
+  pkt->syn = (tcp->th_flags & TH_SYN) ? 1 : 0;
+  pkt->ack = (tcp->th_flags & TH_ACK) ? 1 : 0;
+  pkt->fin = (tcp->th_flags & TH_FIN) ? 1 : 0;
+  pkt->rst = (tcp->th_flags & TH_RST) ? 1 : 0;
 
   return pkt;
 }
