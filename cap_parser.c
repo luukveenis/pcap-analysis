@@ -16,6 +16,7 @@ struct packet* process_packet(const u_char*, struct timeval, unsigned int);
 struct connection* check_connection(struct packet, struct result);
 struct connection* new_connection(struct packet, struct result*);
 void add_packet(struct connection*, struct packet*);
+void update_timestamps(struct result*);
 
 
 /* ---------------- Main ----------------*/
@@ -69,8 +70,8 @@ int process_file(pcap_t *handle, struct result *res){
       add_packet(connection, pkt);
       if (pkt->syn) connection->synstate++;
       if (pkt->fin) connection->finstate++;
-      free(pkt);
     }
+    update_timestamps(res);
   }
 
   return 0;
@@ -149,6 +150,7 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   pkt->port_dst = ntohs(tcp->th_dport);
   pkt->seq = ntohl(tcp->th_seq);
   pkt->ackn = ntohl(tcp->th_ack);
+  pkt->ts = ts;
   pkt->syn = (tcp->th_flags & TH_SYN) ? 1 : 0;
   pkt->ack = (tcp->th_flags & TH_ACK) ? 1 : 0;
   pkt->fin = (tcp->th_flags & TH_FIN) ? 1 : 0;
