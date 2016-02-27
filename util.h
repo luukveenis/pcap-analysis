@@ -18,10 +18,10 @@ struct packet {
   u_short datalen;
   tcp_seq seq;
   tcp_seq ackn;
-  u_int16_t syn:1;
-  u_int16_t ack:1;
-  u_int16_t fin:1;
-  u_int16_t rst:1;
+  uint16_t syn:1;
+  uint16_t ack:1;
+  uint16_t fin:1;
+  uint16_t rst:1;
 };
 
 struct connection {
