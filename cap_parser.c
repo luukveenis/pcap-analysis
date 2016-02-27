@@ -99,6 +99,7 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   struct ip *ip;
   struct tcphdr *tcp;
   unsigned int iphdrlen;
+  u_short datalen;
 
   /* Didn't capture the full ethernet header */
   if (caplen < sizeof(struct ether_header)) {
@@ -118,6 +119,7 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
 
   ip = (struct ip*) packet;
   iphdrlen = ip->ip_hl * 4; // ip_hl is in 4-byte words
+  datalen = ntohs(ip->ip_len) - iphdrlen;
 
   /* Didn't capture the full IP header with options */
   if (caplen < iphdrlen) {
@@ -150,6 +152,7 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   pkt->port_dst = ntohs(tcp->th_dport);
   pkt->seq = ntohl(tcp->th_seq);
   pkt->ackn = ntohl(tcp->th_ack);
+  pkt->datalen = datalen - (tcp->th_off * 4);
   pkt->ts = ts;
   pkt->syn = (tcp->th_flags & TH_SYN) ? 1 : 0;
   pkt->ack = (tcp->th_flags & TH_ACK) ? 1 : 0;

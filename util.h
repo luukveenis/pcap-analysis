@@ -15,6 +15,7 @@ struct packet {
   uint16_t port_src;        /* source port number */
   uint16_t port_dst;        /* destination port number */
   struct timeval ts;        /* timestamp */
+  u_short datalen;
   tcp_seq seq;
   tcp_seq ackn;
   u_int16_t syn:1;
@@ -30,6 +31,8 @@ struct connection {
   int plen;   /* number of packets in connection */
   int psent;  /* number of packets sent from client to server */
   int precvd; /* number of packets received by client from server */
+  int dsent;  /* data bytes sent */
+  int drcvd;  /* data bytes received */
   struct packet *packets[MAX_PACKETS];
   char ip_src[MAX_STR_LEN]; /* source ip */
   char ip_dst[MAX_STR_LEN]; /* destination ip */
