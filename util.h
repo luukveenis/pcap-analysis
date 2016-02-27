@@ -55,9 +55,9 @@ struct tcp_data {
   int reset;
   int complete;
   int open;
-  struct timeval *mintime;
-  struct timeval *meantime;
-  struct timeval *maxtime;
+  struct timeval mintime;
+  struct timeval meantime;
+  struct timeval maxtime;
   int pmin;
   int pmean;
   int pmax;

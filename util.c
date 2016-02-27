@@ -115,7 +115,7 @@ struct tcp_data count_tcp_data(struct result res) {
   uint16_t winsize;
   long micros = 0; /* Add up time in microseconds then convert back to timeval */
   long wmeansum = 0; /* We need a long to sum window sizes in */
-  struct tcp_data data = { .reset = 0, .complete = 0, .open = 0, .mintime = NULL, .maxtime = NULL };
+  struct tcp_data data = { .mintime = { 0, 0 }, .maxtime = { 0, 0 } };
   int i, j, windows;
   for (i = 0; i < res.cons_len; i++) {
     con = res.cons[i];
@@ -127,11 +127,11 @@ struct tcp_data count_tcp_data(struct result res) {
       if (data.pmin == 0 || con->plen < data.pmin) data.pmin = con->plen;
       if (con->plen > data.pmax) data.pmax = con->plen;
       micros += con->duration.tv_usec + (con->duration.tv_sec * 1000000);
-      if (data.mintime == NULL || !timeval_subtract(&ts, data.mintime, &(con->duration))) {
-        data.mintime = &(con->duration);
+      if (!timeval_subtract(&ts, &data.mintime, &(con->duration))) {
+        data.mintime = con->duration;
       }
-      if (data.maxtime == NULL || timeval_subtract(&ts, data.maxtime, &(con->duration))) {
-        data.maxtime = &(con->duration);
+      if (timeval_subtract(&ts, &data.maxtime, &(con->duration))) {
+        data.maxtime = con->duration;
       }
       for (j = 0; j < con->plen; j++) {
         winsize = con->packets[j]->window;
@@ -145,10 +145,9 @@ struct tcp_data count_tcp_data(struct result res) {
   micros = micros / data.complete;
   ts.tv_sec = micros / 1000000;
   ts.tv_usec = micros % 999999;
-  data.meantime = &ts;
+
+  data.meantime = ts;
   data.pmean /= data.complete;
-  printf("Window size total: %d\n", data.wmean);
-  printf("Num packets: %d\n", windows);
   data.wmean = wmeansum / windows;
   return data;
 }
@@ -190,9 +189,9 @@ void print_results(struct result res) {
   printf("Number of TCP connections that were still open when the trace capture ended: %d\n", data.open);
   printf("\n--------------------------------------------------------\n\n");
   printf("D) Complete TCP Connections\n\n");
-  printf("Minimum time duration: %s\n", timestamp_str(*data.mintime));
-  printf("Mean time duration: %s\n", timestamp_str(*data.meantime));
-  printf("Maximum time duration: %s\n\n", timestamp_str(*data.maxtime));
+  printf("Minimum time duration: %s\n", timestamp_str(data.mintime));
+  printf("Mean time duration: %s\n", timestamp_str(data.meantime));
+  printf("Maximum time duration: %s\n\n", timestamp_str(data.maxtime));
   printf("Minimum number of packets including both send/received: %d\n", data.pmin);
   printf("Mean number of packets including both send/received: %d\n", data.pmean);
   printf("Max number of packets including both send/received: %d\n\n", data.pmax);
