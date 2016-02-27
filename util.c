@@ -119,6 +119,9 @@ struct tcp_data count_tcp_data(struct result res) {
     if (con->finstate == 0) data.open += 1;
     if (is_complete(con)) {
       data.complete += 1;
+      data.pmean += con->plen;
+      if (data.pmin == 0 || con->plen < data.pmin) data.pmin = con->plen;
+      if (con->plen > data.pmax) data.pmax = con->plen;
       micros += con->duration.tv_usec + (con->duration.tv_sec * 1000000);
       if (data.mintime == NULL || !timeval_subtract(&ts, data.mintime, &(con->duration))) {
         data.mintime = &(con->duration);
@@ -132,6 +135,7 @@ struct tcp_data count_tcp_data(struct result res) {
   ts.tv_sec = micros / 1000000;
   ts.tv_usec = micros % 999999;
   data.meantime = &ts;
+  data.pmean /= data.complete;
   return data;
 }
 
@@ -174,5 +178,8 @@ void print_results(struct result res) {
   printf("D) Complete TCP Connections\n\n");
   printf("Minimum time duration: %s\n", timestamp_str(*data.mintime));
   printf("Mean time duration: %s\n", timestamp_str(*data.meantime));
-  printf("Maximum time duration: %s\n", timestamp_str(*data.maxtime));
+  printf("Maximum time duration: %s\n\n", timestamp_str(*data.maxtime));
+  printf("Minimum number of packets including both send/received: %d\n", data.pmin);
+  printf("Mean number of packets including both send/received: %d\n", data.pmean);
+  printf("Max number of packets including both send/received: %d\n\n", data.pmax);
 }

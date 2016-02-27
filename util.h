@@ -57,6 +57,9 @@ struct tcp_data {
   struct timeval *mintime;
   struct timeval *meantime;
   struct timeval *maxtime;
+  int pmin;
+  int pmean;
+  int pmax;
 };
 
 const char* timestamp_str(struct timeval);
