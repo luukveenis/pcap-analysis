@@ -28,6 +28,7 @@ struct connection {
   int id;
   struct timeval start;
   struct timeval end;
+  struct timeval duration;
   int plen;    /* number of packets in connection */
   int psent;   /* number of packets sent from client to server */
   int precvd;  /* number of packets received by client from server */
@@ -53,8 +54,10 @@ struct tcp_data {
   int reset;
   int complete;
   int open;
+  struct timeval *mintime;
+  struct timeval *meantime;
+  struct timeval *maxtime;
 };
-
 
 const char* timestamp_str(struct timeval);
 void problem_pkt(struct timeval, const char*);

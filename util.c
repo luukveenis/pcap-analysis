@@ -77,6 +77,8 @@ void update_timestamps(struct result *res) {
       con->start = result;
       timeval_subtract(&result, &(con->packets[con->plen - 1]->ts), &start);
       con->end = result;
+      timeval_subtract(&result, &(con->end), &(con->start));
+      con->duration = result;
     }
   }
 }
@@ -106,13 +108,30 @@ int data_size(struct connection *con, int sent) {
 }
 
 struct tcp_data count_tcp_data(struct result res) {
-  struct tcp_data data = { .reset = 0, .complete = 0, .open = 0 };
+  struct connection *con;
+  struct timeval ts;
+  long micros; /* Add up time in microseconds then convert back to timeval */
+  struct tcp_data data = { .reset = 0, .complete = 0, .open = 0, .mintime = NULL, .maxtime = NULL };
   int i;
   for (i = 0; i < res.cons_len; i++) {
-    if (res.cons[i]->reset) data.reset += 1;
-    if (is_complete(res.cons[i])) data.complete += 1;
-    if (res.cons[i]->finstate == 0) data.open += 1;
+    con = res.cons[i];
+    if (con->reset) data.reset += 1;
+    if (con->finstate == 0) data.open += 1;
+    if (is_complete(con)) {
+      data.complete += 1;
+      micros += con->duration.tv_usec + (con->duration.tv_sec * 1000000);
+      if (data.mintime == NULL || !timeval_subtract(&ts, data.mintime, &(con->duration))) {
+        data.mintime = &(con->duration);
+      }
+      if (data.maxtime == NULL || timeval_subtract(&ts, data.maxtime, &(con->duration))) {
+        data.maxtime = &(con->duration);
+      }
+    }
   }
+  micros = micros / data.complete;
+  ts.tv_sec = micros / 1000000;
+  ts.tv_usec = micros % 999999;
+  data.meantime = &ts;
   return data;
 }
 
@@ -130,8 +149,6 @@ void print_results(struct result res) {
     printf("Destination port: %d\n", con->port_dst);
     printf("Status: S%dF%d\n", con->synstate, con->finstate);
     if (is_complete(con)) {
-      struct timeval duration;
-      timeval_subtract(&duration, &(con->end), &(con->start));
       int bsent = data_size(con, 1);
       int brcvd = data_size(con, 0);
       printf("Number of packets sent from source to destination: %d\n", con->psent);
@@ -139,7 +156,7 @@ void print_results(struct result res) {
       printf("Total number of packets: %d\n", con->plen);
       printf("Connection start time: %s\n", timestamp_str(con->start));
       printf("Connection end time: %s\n", timestamp_str(con->end));
-      printf("Connection duration: %s\n", timestamp_str(duration));
+      printf("Connection duration: %s\n", timestamp_str(con->duration));
       printf("Data bytes sent from client to server: %d\n", bsent);
       printf("Data bytes sent from server to client: %d\n", brcvd);
       printf("Total data bytes sent: %d\n", (bsent + brcvd));
@@ -153,4 +170,9 @@ void print_results(struct result res) {
   printf("Total number of complete TCP connections: %d\n", data.complete);
   printf("Number of reset TCP connections: %d\n", data.reset);
   printf("Number of TCP connections that were still open when the trace capture ended: %d\n", data.open);
+  printf("\n--------------------------------------------------------\n\n");
+  printf("D) Complete TCP Connections\n\n");
+  printf("Minimum time duration: %s\n", timestamp_str(*data.mintime));
+  printf("Mean time duration: %s\n", timestamp_str(*data.meantime));
+  printf("Maximum time duration: %s\n", timestamp_str(*data.maxtime));
 }
