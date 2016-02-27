@@ -110,9 +110,11 @@ int data_size(struct connection *con, int sent) {
 struct tcp_data count_tcp_data(struct result res) {
   struct connection *con;
   struct timeval ts;
-  long micros; /* Add up time in microseconds then convert back to timeval */
+  uint16_t winsize;
+  long micros = 0; /* Add up time in microseconds then convert back to timeval */
+  long wmeansum = 0; /* We need a long to sum window sizes in */
   struct tcp_data data = { .reset = 0, .complete = 0, .open = 0, .mintime = NULL, .maxtime = NULL };
-  int i;
+  int i, j, windows;
   for (i = 0; i < res.cons_len; i++) {
     con = res.cons[i];
     if (con->reset) data.reset += 1;
@@ -129,6 +131,13 @@ struct tcp_data count_tcp_data(struct result res) {
       if (data.maxtime == NULL || timeval_subtract(&ts, data.maxtime, &(con->duration))) {
         data.maxtime = &(con->duration);
       }
+      for (j = 0; j < con->plen; j++) {
+        winsize = con->packets[j]->window;
+        windows++;
+        wmeansum += winsize;
+        if (winsize < data.wmin) data.wmin = winsize;
+        if (winsize > data.wmax) data.wmax = winsize;
+      }
     }
   }
   micros = micros / data.complete;
@@ -136,6 +145,9 @@ struct tcp_data count_tcp_data(struct result res) {
   ts.tv_usec = micros % 999999;
   data.meantime = &ts;
   data.pmean /= data.complete;
+  printf("Window size total: %d\n", data.wmean);
+  printf("Num packets: %d\n", windows);
+  data.wmean = wmeansum / windows;
   return data;
 }
 
@@ -182,4 +194,7 @@ void print_results(struct result res) {
   printf("Minimum number of packets including both send/received: %d\n", data.pmin);
   printf("Mean number of packets including both send/received: %d\n", data.pmean);
   printf("Max number of packets including both send/received: %d\n\n", data.pmax);
+  printf("Minimum receive window sizes including both send/received: %d\n", data.wmin);
+  printf("Mean receive window sizes including both send/received: %d\n", data.wmean);
+  printf("Maximum receive window sizes including both send/received: %d\n", data.wmax);
 }

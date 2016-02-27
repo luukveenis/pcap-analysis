@@ -18,6 +18,7 @@ struct packet {
   u_short datalen;
   tcp_seq seq;
   tcp_seq ackn;
+  uint16_t window;
   uint16_t syn:1;
   uint16_t ack:1;
   uint16_t fin:1;
@@ -60,6 +61,9 @@ struct tcp_data {
   int pmin;
   int pmean;
   int pmax;
+  uint16_t wmin;
+  uint16_t wmean;
+  uint16_t wmax;
 };
 
 const char* timestamp_str(struct timeval);

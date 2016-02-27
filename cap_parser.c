@@ -154,6 +154,7 @@ struct packet* process_packet(const u_char *packet, struct timeval ts, unsigned 
   pkt->seq = ntohl(tcp->th_seq);
   pkt->ackn = ntohl(tcp->th_ack);
   pkt->datalen = datalen - (tcp->th_off * 4);
+  pkt->window = ntohs(tcp->th_win);
   pkt->ts = ts;
   pkt->syn = (tcp->th_flags & TH_SYN) ? 1 : 0;
   pkt->ack = (tcp->th_flags & TH_ACK) ? 1 : 0;
