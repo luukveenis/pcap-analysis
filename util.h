@@ -28,11 +28,12 @@ struct connection {
   int id;
   struct timeval start;
   struct timeval end;
-  int plen;   /* number of packets in connection */
-  int psent;  /* number of packets sent from client to server */
-  int precvd; /* number of packets received by client from server */
-  int dsent;  /* data bytes sent */
-  int drcvd;  /* data bytes received */
+  int plen;    /* number of packets in connection */
+  int psent;   /* number of packets sent from client to server */
+  int precvd;  /* number of packets received by client from server */
+  int dsent;   /* data bytes sent */
+  int drcvd;   /* data bytes received */
+  int reset:1; /* 1 if connection has been reset, 0 otherwise */
   struct packet *packets[MAX_PACKETS];
   char ip_src[MAX_STR_LEN]; /* source ip */
   char ip_dst[MAX_STR_LEN]; /* destination ip */

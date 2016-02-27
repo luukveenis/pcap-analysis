@@ -105,6 +105,30 @@ int data_size(struct connection *con, int sent) {
   return sum;
 }
 
+int count_reset(struct result res) {
+  int i, sum = 0;
+  for (i = 0; i < res.cons_len; i++) {
+    if (res.cons[i]->reset) sum += 1;
+  }
+  return sum;
+}
+
+int count_complete(struct result res) {
+  int i, sum = 0;
+  for (i = 0; i < res.cons_len; i++) {
+    if (is_complete(res.cons[i])) sum += 1;
+  }
+  return sum;
+}
+
+int count_open(struct result res) {
+  int i, sum = 0;
+  for (i = 0; i < res.cons_len; i++) {
+    if (res.cons[i]->finstate == 0) sum += 1;
+  }
+  return sum;
+}
+
 void print_results(struct result res) {
   int i;
   printf("A) Total number of connections: %d\n", res.cons_len);
@@ -136,5 +160,9 @@ void print_results(struct result res) {
     printf("END\n");
     if (i != res.cons_len - 1) printf("+++++++++++++++++++++++++++++\n");
   }
-  printf("--------------------------------------------------------\n");
+  printf("--------------------------------------------------------\n\n");
+  printf("C) General\n\n");
+  printf("Total number of complete TCP connections: %d\n", count_complete(res));
+  printf("Number of reset TCP connections: %d\n", count_reset(res));
+  printf("Number of TCP connections that were still open when the trace capture ended: %d\n", count_open(res));
 }

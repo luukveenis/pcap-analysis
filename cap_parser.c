@@ -70,6 +70,7 @@ int process_file(pcap_t *handle, struct result *res){
       add_packet(connection, pkt);
       if (pkt->syn) connection->synstate++;
       if (pkt->fin) connection->finstate++;
+      if (pkt->rst) connection->reset = 1;
     }
     update_timestamps(res);
   }
