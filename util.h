@@ -49,6 +49,12 @@ struct result {
   struct connection* cons[MAX_NUM_CONNECTION];
 };
 
+struct tcp_data {
+  int reset;
+  int complete;
+  int open;
+};
+
 
 const char* timestamp_str(struct timeval);
 void problem_pkt(struct timeval, const char*);
