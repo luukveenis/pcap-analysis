@@ -151,6 +151,7 @@ struct tcp_data count_tcp_data(struct result res) {
   data.meantime = ts;
   data.pmean /= data.complete;
   data.wmean = wmeansum / windows;
+  printf("wmean: %d\n", data.wmean);
   return data;
 }
 
