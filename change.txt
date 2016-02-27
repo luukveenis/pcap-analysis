@@ -1,0 +1,19 @@
+Changes since the in-lab demo:
+
+When doing my demo, a number of things had not yet been implemented. What I've
+added since is listed below:
+
+1) Added reporting for min/mean/max durations for complete connections
+
+2) Added reporting for data bytes send from the client to the server and
+   vice versa; as well as the total bytes sent.
+
+3) Added counts for reset, complete, and open connections
+
+4) Added reporting for start and end times for connections
+
+5) Added reporting for number of packets sent between client and server
+
+6) Added reporting for min/mean/max window sizes
+
+7) Added computation for RTTs
