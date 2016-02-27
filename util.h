@@ -49,6 +49,9 @@ struct result {
   int packets;    /* Total number of packets sent */
   int cons_len;   /* Total number of connections */
   struct connection* cons[MAX_NUM_CONNECTION];
+  struct timeval minrtt;
+  struct timeval meanrtt;
+  struct timeval maxrtt;
 };
 
 struct tcp_data {
@@ -70,5 +73,6 @@ const char* timestamp_str(struct timeval);
 void problem_pkt(struct timeval, const char*);
 void pkt_too_short(struct timeval, const char*);
 void print_results(struct result);
+void update_rtts(struct result*);
 
 #endif

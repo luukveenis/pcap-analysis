@@ -154,6 +154,49 @@ struct tcp_data count_tcp_data(struct result res) {
   return data;
 }
 
+/* Computes round trip times for each connection and stores them */
+void update_rtts(struct result *res) {
+  int i,j,k, first = 1;
+  long micros, rttcount;
+  struct timeval start, end, result;
+  struct connection *con;
+  struct packet *pkt;
+
+  /* Loop over all the connections */
+  for (i = 0; i < res->cons_len; i++) {
+    con = res->cons[i];
+    if (is_complete(con)) {
+      /* Loop over the packets for the connection */
+      for (j = 0; j < con->plen; j++){
+        pkt = con->packets[j];
+        start = pkt->ts;
+        /* Look for the matching Ack # to the Seq # */
+        for (k = j + 1; k < con->plen; k++) {
+          if (con->packets[k]->ack == pkt->seq) {
+            end = con->packets[k]->ts; // grab the timestamp from the matching packet
+            timeval_subtract(&result, &end, &start); // compute the RTT
+            rttcount++; // keep track of how many RTT values we've computed
+            micros += (result.tv_sec * 1000000 + result.tv_usec); // Store RTT sum in microseconds
+            if (first || !timeval_subtract(&result, &res->minrtt, &end)) {
+              first = 0;
+              res->minrtt = end;
+            }
+            if (timeval_subtract(&result, &res->maxrtt, &end)) {
+              res->maxrtt = end;
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+  /* Get the mean RTT value and convert it back to a timeval struct */
+  micros /= rttcount;
+  result.tv_sec = micros / 1000000;
+  result.tv_usec = micros % 999999;
+  res->meanrtt = result;
+}
+
 void print_results(struct result res) {
   int i;
   printf("A) Total number of connections: %d\n", res.cons_len);
@@ -194,6 +237,9 @@ void print_results(struct result res) {
   printf("Minimum time duration: %s\n", timestamp_str(data.mintime));
   printf("Mean time duration: %s\n", timestamp_str(data.meantime));
   printf("Maximum time duration: %s\n\n", timestamp_str(data.maxtime));
+  printf("Minimum RTT values including both send/received: %s\n", timestamp_str(res.minrtt));
+  printf("Mean RTT values including both send/received: %s\n", timestamp_str(res.meanrtt));
+  printf("Max RTT values including both send/received: %s\n\n", timestamp_str(res.maxrtt));
   printf("Minimum number of packets including both send/received: %d\n", data.pmin);
   printf("Mean number of packets including both send/received: %d\n", data.pmean);
   printf("Max number of packets including both send/received: %d\n\n", data.pmax);

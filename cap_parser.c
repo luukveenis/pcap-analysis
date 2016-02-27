@@ -73,6 +73,7 @@ int process_file(pcap_t *handle, struct result *res){
       if (pkt->rst) connection->reset = 1;
     }
     update_timestamps(res);
+    update_rtts(res);
   }
 
   return 0;
