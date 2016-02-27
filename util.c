@@ -116,7 +116,8 @@ struct tcp_data count_tcp_data(struct result res) {
   long micros = 0; /* Add up time in microseconds then convert back to timeval */
   long wmeansum = 0; /* We need a long to sum window sizes in */
   struct tcp_data data = { .mintime = { 0, 0 }, .maxtime = { 0, 0 } };
-  int i, j, windows;
+  int i, j, windows, ftime = 1;
+
   for (i = 0; i < res.cons_len; i++) {
     con = res.cons[i];
     if (con->reset) data.reset += 1;
@@ -127,7 +128,8 @@ struct tcp_data count_tcp_data(struct result res) {
       if (data.pmin == 0 || con->plen < data.pmin) data.pmin = con->plen;
       if (con->plen > data.pmax) data.pmax = con->plen;
       micros += con->duration.tv_usec + (con->duration.tv_sec * 1000000);
-      if (!timeval_subtract(&ts, &data.mintime, &(con->duration))) {
+      if (ftime || !timeval_subtract(&ts, &data.mintime, &(con->duration))) {
+        ftime = 0;
         data.mintime = con->duration;
       }
       if (timeval_subtract(&ts, &data.maxtime, &(con->duration))) {
