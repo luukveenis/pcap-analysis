@@ -170,14 +170,14 @@ void print_results(struct result res) {
     if (is_complete(con)) {
       int bsent = data_size(con, 1);
       int brcvd = data_size(con, 0);
-      printf("Number of packets sent from source to destination: %d\n", con->psent);
-      printf("Number of packets sent from destination to client: %d\n", con->precvd);
-      printf("Total number of packets: %d\n", con->plen);
       printf("Connection start time: %s\n", timestamp_str(con->start));
       printf("Connection end time: %s\n", timestamp_str(con->end));
       printf("Connection duration: %s\n", timestamp_str(con->duration));
-      printf("Data bytes sent from client to server: %d\n", bsent);
-      printf("Data bytes sent from server to client: %d\n", brcvd);
+      printf("Number of packets sent from source to destination: %d\n", con->psent);
+      printf("Number of packets sent from destination to source: %d\n", con->precvd);
+      printf("Total number of packets: %d\n", con->plen);
+      printf("Number of data bytes sent from Source to Destination: %d\n", bsent);
+      printf("Number of data bytes sent from Destination to Source: %d\n", brcvd);
       printf("Total data bytes sent: %d\n", (bsent + brcvd));
     }
     printf("END\n");
